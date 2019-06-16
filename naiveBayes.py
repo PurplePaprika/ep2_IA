@@ -1,24 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 28 19:03:24 2019
+Created on Sun Jun 16 19:03:24 2019
 
 @author: PurplePaprika
 """
 
 import csv
+import sklearn
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+import numpy as np
 import random
-
-def carregarDataset(arquivo):
-	linhas = csv.reader(open(arquivo, "rt"))
-	dataset = list(linhas)
-	for i in range(len(dataset)):
-		dataset[i] = [float(x) for x in dataset[i]]
-	return dataset
-
-
-dataset = carregarDataset('base.txt')
-print (dataset)
-
 
 def dividirDataset(dataset, proporcao): #proporcao = % da amostra que será usada de base (0<p<1)// retorna BASE, TESTE
     total = dataset.copy()
@@ -26,7 +19,7 @@ def dividirDataset(dataset, proporcao): #proporcao = % da amostra que será usad
     nBase = len(dataset) - nTeste
     datasetTeste = []
 
-    for i in range (0,nTeste):
+    for i in range(0,nTeste):
         rnd = random.randint(0 , len(total)-1)
         datasetTeste.append(total[rnd])
         total.remove(total[rnd])
@@ -34,7 +27,34 @@ def dividirDataset(dataset, proporcao): #proporcao = % da amostra que será usad
     return total, datasetTeste
 
 
-base, teste = dividirDataset(dataset, 0.7)
+dados = []
+dadosTeste = []
+classes = []
+classesTeste = []
 
-print (len(base), base)
-print (len(teste), teste)
+with open("base.txt") as arquivo:
+    leitorCsv = csv.reader(arquivo, delimiter=",")
+    for linha in leitorCsv:
+        dados.append(linha)
+
+
+dados, dadosTeste = dividirDataset(dados, 0.7)
+
+for l in dados:
+    classes.append(l[-1])
+
+for k in dadosTeste:
+    classesTeste.append(k[-1])
+
+dadosNP = np.array(dados).astype(np.float)[:,:-1]
+classesNP = np.array(classes).astype(np.float).reshape(-1, 1)
+dadosTesteNP = np.array(dadosTeste).astype(np.float)[:,:-1]
+classesTesteNP = np.array(classesTeste).astype(np.float).reshape(-1, 1)
+
+gauss = GaussianNB()
+
+gauss.fit(dadosNP, classesNP.ravel())
+
+predicoes = gauss.predict(dadosTesteNP)
+
+print("Acurácia :",metrics.accuracy_score(classesTesteNP, predicoes))
